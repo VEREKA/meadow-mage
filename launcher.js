@@ -72,14 +72,19 @@ function init() {
       o.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (!robeMat) { robeMat = q.material; baseImg = q.material.map && q.material.map.image; } } });
       if (st) {
         let hand = null; o.traverse(q => { if (!hand && /handslot.?r$/i.test(q.name)) hand = q; });
-        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); st.scene.rotation.z = Math.PI; hand.add(st.scene); }
+        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; }
       }
       if (rig) {
         mixer = new THREE.AnimationMixer(o);
         const clip = n => THREE.AnimationClip.findByName(rig.animations, n);
         if (clip('Idle_A')) { idle = mixer.clipAction(clip('Idle_A')); idle.play(); }
-        if (clip('Use_Item')) { act = mixer.clipAction(clip('Use_Item')); act.setLoop(THREE.LoopOnce); act.clampWhenFinished = false; }
-        mixer.addEventListener('finished', () => { if (idle) idle.reset().fadeIn(.25).play(); });
+        if (clip('Use_Item')) { act = mixer.clipAction(clip('Use_Item')); act.setLoop(THREE.LoopOnce); act.clampWhenFinished = true; }
+        mixer.addEventListener('finished', () => { if (idle && act) { idle.enabled = true; idle.reset().play(); idle.crossFadeFrom(act, .3, false); } });
+      }
+      if (H.staff) {   // stand the staff upright in the idle pose, whatever way the hand bone points
+        if (mixer) mixer.update(0); rot.updateMatrixWorld(true);
+        const qh = H.hand.getWorldQuaternion(new THREE.Quaternion()), qr = rot.getWorldQuaternion(new THREE.Quaternion());
+        H.staff.quaternion.copy(qh.invert().multiply(qr));
       }
       H.ready = true; look(false);
     });
@@ -110,13 +115,13 @@ function init() {
     paintRobe(MM.ROBEC[ch.robe] || MM.ROBEC[0]);
     if (staffMat) staffMat.color.set(MM.WOODC[ch.wood] || MM.WOODC[0]).lerp(new THREE.Color(0xffffff), .35);
     rim.color.set(oc); ring.material.color.set(oc); glowMat.color.set(oc);
-    if (wave && act && idle) { idle.fadeOut(.15); act.reset().fadeIn(.15).play(); }
+    if (wave && act && idle) { act.enabled = true; act.reset().play(); act.crossFadeFrom(idle, .15, false); }
     heroTag();
   }
   function heroTag() {
     const p = MM.prog(), ch = MM.char, pet = MM.PETS.find(q => q[0] === p.pet);
     tag.textContent = '';
-    tag.append(el('b', null, ch.name || 'Bezimienny'), el('span', null, `${MM.ORIGINS[ch.origin][0]} · poziom ${p.lvl}${p.rb ? ' · odrodzenia ' + p.rb : ''}`), el('em', null, (pet ? 'Chowaniec: ' + pet[1] + ' · ' : '') + 'przeciągnij, aby obrócić'));
+    tag.append(el('b', null, ch.name || 'Bezimienny'), el('span', null, `${MM.ORIGINS[ch.origin][0]} · poziom ${p.lvl}${p.rb ? ' · odrodzenia ' + p.rb : ''}`), el('em', null, (pet ? 'Zwierzak: ' + pet[1] + ' · ' : '') + 'przeciągnij, aby obrócić'));
   }
   cv.addEventListener('pointerdown', e => { H.drag = e.clientX; cv.setPointerCapture(e.pointerId); });
   cv.addEventListener('pointermove', e => { if (H.drag == null) return; const dx = e.clientX - H.drag; H.drag = e.clientX; H.yaw += dx * .012; H.vel = dx * .012; });
@@ -142,7 +147,7 @@ function init() {
   function charStats() {
     const p = MM.prog(), box = $('charx'); box.textContent = '';
     const st = (a, b) => { const d = el('div', 'stat'); d.append(el('small', null, a), el('b', null, b)); return d; };
-    box.append(st('Poziom', p.lvl), st('Mana', MM.maxMana()), st('Złoto', p.gold), st('Przedmioty', Object.keys(p.eq || {}).length + ' założone'), st('Zaklęcia', MM.SPELLS.length + ' w księdze'), st('Chowańce', (p.pets || []).length + ' / ' + MM.PETS.length));
+    box.append(st('Poziom', p.lvl), st('Mana', MM.maxMana()), st('Złoto', p.gold), st('Przedmioty', Object.keys(p.eq || {}).length + ' założone'), st('Zaklęcia', MM.SPELLS.length + ' w księdze'), st('Zwierzaki', (p.pets || []).length + ' / ' + MM.PETS.length));
   }
 
   /* ---------- options ---------- */
@@ -242,7 +247,7 @@ function init() {
       [70, 9.5, '<kbd>T</kbd> otwiera panel: umiejętności, <b>rozwój</b> i ekwipunek.'],
       [22, 26, '<b>Trening</b> za złoto na stałe wzmacnia moc, szybkość rzucania i manę.'],
       [30, 57, '<b>Kryształ many</b> ulepszasz tutaj, a klikasz w obozie.'],
-      [40, 86, '<b>Chowańce</b>: jeden towarzyszy ci naraz. Niżej jest odrodzenie, dostępne od 15. poziomu.']]],
+      [40, 86, '<b>Zwierzaki</b>: jeden towarzyszy ci naraz. Niżej jest odrodzenie, dostępne od 15. poziomu.']]],
     ['Kryształ i obrona wieży', 'Clicker i tower defense', 'how5', [
       [46.5, 53, 'Przy <b>Krysztale many</b> wciskaj <kbd>E</kbd>: każde kliknięcie daje złoto i manę. Ładunki wracają szybciej, gdy pokonujesz stwory.'],
       [50, 76.5, '<b>Róg obrony</b> w obozie zaczyna obronę wieży. Stwory idą na kryształ — pilnuj jego życia na pasku stanu.'],
@@ -282,7 +287,7 @@ function init() {
     MM.MAPS.forEach((m, i) => g.append(st(m.name, MM.best(i).wave ? 'fala ' + MM.best(i).wave : '—')));
     box.append(g, el('h3', null, 'Osiągnięcia'));
     const A = [['Pierwsza krew', 'Pokonaj 10 stworów', s.k || 0, 10], ['Tępiciel', 'Pokonaj 250 stworów', s.k || 0, 250], ['Pogromca', 'Pokonaj 1000 stworów', s.k || 0, 1000], ['Łowca bossów', 'Pokonaj 5 bossów', s.b || 0, 5], ['Uczeń', 'Osiągnij 5. poziom', p.lvl, 5], ['Arcymag', 'Osiągnij 15. poziom', p.lvl, 15],
-      ['Obrońca łąki', 'Ukończ 10 fal na Kwitnącej Łące', MM.best(0).wave, 10], ['Zdobywca', 'Ukończ 10 fal w każdej krainie', MM.MAPS.filter((m, i) => MM.best(i).wave >= 10).length, 3], ['Klikacz', 'Kliknij kryształ 200 razy', s.cl || 0, 200], ['Strażnik kryształu', 'Przetrwaj 5 fal obrony wieży', p.tdBest || 0, 5], ['Treser', 'Zbierz wszystkie chowańce', (p.pets || []).length, MM.PETS.length], ['Feniks', 'Odródź się', p.rb || 0, 1]];
+      ['Obrońca łąki', 'Ukończ 10 fal na Kwitnącej Łące', MM.best(0).wave, 10], ['Zdobywca', 'Ukończ 10 fal w każdej krainie', MM.MAPS.filter((m, i) => MM.best(i).wave >= 10).length, 3], ['Klikacz', 'Kliknij kryształ 200 razy', s.cl || 0, 200], ['Strażnik kryształu', 'Przetrwaj 5 fal obrony wieży', p.tdBest || 0, 5], ['Treser', 'Zbierz wszystkie zwierzaki', (p.pets || []).length, MM.PETS.length], ['Feniks', 'Odródź się', p.rb || 0, 1]];
     const a = el('div', 'ach'); let done = 0;
     for (const q of A) { const ok = q[2] >= q[3], d = el('div', ok ? 'done' : ''), u = el('u'), i = el('i'); if (ok) done++; i.style.width = Math.min(100, q[2] / q[3] * 100) + '%'; u.append(i); d.append(el('b', null, (ok ? '★ ' : '') + q[0]), el('small', null, q[1] + ' · ' + Math.min(q[2], q[3]) + '/' + q[3]), u); a.append(d); }
     box.append(a, el('div', 'ofoot', `Zdobyte: ${done} z ${A.length}. Statystyki liczone są od tej wersji gry.`));
@@ -291,7 +296,7 @@ function init() {
   /* ---------- news ---------- */
   const NEWS = [
     ['Nowy launcher', '17 listopada 2026', ['Tło to teraz przelot kamery nad aktualną krainą, z paralaksą na mysz.', 'Podgląd maga w 3D: szata, kostur i pochodzenie zmieniają się na żywo.', 'Opcje w sześciu zakładkach, w tym przypisywanie klawiszy i eksport zapisu.', 'Samouczek ze zrzutami ekranu, profil ze statystykami i osiągnięciami, nagroda dnia.', 'W grze: liczby obrażeń, trzy style celownika, licznik klatek.']],
-    ['Modele 3D, mana i obrona wieży', '17 listopada 2026', ['Animowane modele stworów i postaci w obozie.', 'Mana, osobne koszty i zasięgi zaklęć, nowy Frostbolt.', 'Zakładka Rozwój: trening, kryształ many, chowańce, odrodzenie.', 'Tryb obrony wieży z wieżyczkami.']]];
+    ['Modele 3D, mana i obrona wieży', '17 listopada 2026', ['Animowane modele stworów i postaci w obozie.', 'Mana, osobne koszty i zasięgi zaklęć, nowy Frostbolt.', 'Zakładka Rozwój: trening, kryształ many, zwierzaki, odrodzenie.', 'Tryb obrony wieży z wieżyczkami.']]];
   function news() {
     const box = $('secNews'); box.textContent = ''; box.append(el('h3', null, 'Nowości'));
     for (const n of NEWS) { const d = el('div', 'news'), ul = el('ul'); n[2].forEach(t => ul.append(el('li', null, t))); d.append(el('time', null, n[1]), el('h4', null, n[0]), ul); box.append(d); }
