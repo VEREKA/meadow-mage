@@ -21,7 +21,7 @@
 
 /* Rozwój */
 #grow{display:block}
-.gtrain{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.gtrain{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .gt{border:12px solid transparent;border-image:url(assets/ui/card.png) 32 / 12px stretch;background:rgba(255,255,255,.035);background-clip:padding-box;padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
 .gt svg{width:46px;height:46px;filter:drop-shadow(0 0 10px var(--c))}
 .gt b{font:normal 16px Georgia,serif;color:#fff}.gt small{font-size:11.5px;color:#a79f8e;line-height:1.35;min-height:31px}
@@ -69,3 +69,39 @@
 #pfoot{margin-top:16px;padding-top:12px;background:url(assets/ui/divider.png) center top/420px 9px no-repeat}
 @media (max-width:820px){#panel{border-width:16px;border-image-width:16px}.gtrain{grid-template-columns:repeat(2,minmax(0,1fr))}.gpets{grid-template-columns:1fr}.gcry{grid-template-columns:90px minmax(0,1fr)}.gstats{grid-template-columns:repeat(2,minmax(0,1fr))}.grb{grid-template-columns:auto minmax(0,1fr)}.mcgrid{grid-template-columns:repeat(5,48px)}#panel .sl{width:48px;height:48px}#panel .sl img{width:30px;height:30px}#inv{grid-template-columns:1fr}}
 .gt .pips i{width:6px;height:6px;margin:2px 0}.gt .pips{gap:2px;flex-wrap:nowrap}
+
+/* HUD: hearts, boss bar, low-health warning, crit numbers */
+#hp{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);display:flex;gap:3px;padding:5px 12px;border-radius:999px;background:rgba(14,8,10,.72);border:2px solid rgba(255,120,120,.55);box-shadow:0 2px 14px rgba(0,0,0,.5),inset 0 0 12px rgba(255,60,60,.15);pointer-events:none;z-index:2}
+#hp img{width:30px;height:30px;filter:drop-shadow(0 1px 2px #000) saturate(1.3);transition:filter .25s,transform .2s}
+#hp img.off{filter:grayscale(1) brightness(.28) drop-shadow(0 1px 2px #000);transform:scale(.86)}
+#hp img.pop{animation:hpop .45s ease-out}@keyframes hpop{0%{transform:scale(1.7) rotate(-14deg)}100%{transform:scale(.86)}}
+#hp.low{border-color:#ff4a4a;animation:hlow .6s ease-in-out infinite alternate}#hp.low img:not(.off){animation:hbeat .6s ease-in-out infinite alternate}
+@keyframes hlow{from{box-shadow:0 0 6px rgba(255,40,40,.4)}to{box-shadow:0 0 26px rgba(255,40,40,.95)}}@keyframes hbeat{from{transform:scale(1)}to{transform:scale(1.22)}}
+#lowv{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at center,transparent 52%,rgba(190,0,10,.55) 100%);z-index:1}
+#name{bottom:154px}#stat{bottom:184px}#prompt{bottom:232px}
+#boss{position:fixed;left:50%;top:18px;transform:translateX(-50%);width:min(720px,62vw);pointer-events:none;z-index:2;text-align:left}#boss[hidden]{display:none}
+#boss b{display:block;font:normal 22px Georgia,serif;letter-spacing:.05em;color:#f3ead8;text-shadow:0 2px 6px #000,0 0 2px #000;margin:0 0 4px 4px}
+#boss u{display:block;height:14px;background:rgba(10,6,8,.8);border:1px solid rgba(227,194,122,.75);box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6);position:relative;text-decoration:none}
+#boss u::before,#boss u::after{content:"";position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(227,194,122,.8);left:34%}#boss u::after{left:67%}
+#boss i{display:block;height:100%;background:linear-gradient(180deg,#d8323a,#8a1218);transition:width .25s}
+#boss[data-ph="3"] i{background:linear-gradient(180deg,#ff8a2a,#b0200a)}
+#dmg b.crit{font-size:32px;color:#ff5a2a;text-shadow:0 0 10px #ff2a00,0 2px 3px #000;animation:dnc .8s ease-out forwards}@keyframes dnc{0%{opacity:1;margin-top:0;transform:translate(-50%,-50%) scale(1.8)}20%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;margin-top:-64px;transform:translate(-50%,-50%) scale(1)}}
+@media (max-width:820px){#hp img{width:22px;height:22px}#hp{bottom:98px}#name{bottom:132px}#stat{bottom:158px}}
+
+/* merchant: bulk selling */
+.sellrow{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start}.sellbar{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+/* dealer's games */
+#games[hidden]{display:none}.gpills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.gbox{border:12px solid transparent;border-image:url(assets/ui/card.png) 32 / 12px stretch;background:radial-gradient(ellipse at 50% 0,rgba(40,110,70,.5),rgba(10,40,26,.55));background-clip:padding-box;padding:16px 18px;min-height:330px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.hand{text-align:center}.hand span{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#cfe6d6;margin-bottom:6px}
+.cards{display:flex;gap:8px;justify-content:center;min-height:104px}
+.card{position:relative;width:72px;height:102px;border-radius:8px;background:linear-gradient(160deg,#fffdf4,#e9e1c8);color:#1a1620;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:cdeal .22s ease-out}
+.card.red{color:#c2202c}.card b{position:absolute;left:7px;top:4px;font:700 20px Georgia,serif}.card i{position:absolute;left:8px;top:26px;font-style:normal;font-size:15px}.card u{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;text-decoration:none}
+.card.back{background:repeating-linear-gradient(45deg,#5a2a7a 0 8px,#3d1a58 8px 16px);border:3px solid #e3c27a;box-sizing:border-box}
+.cards.big .card{width:104px;height:148px}.cards.big .card u{font-size:60px}.cards.big .card b{font-size:28px}.cards.big .card i{top:36px;font-size:20px}
+@keyframes cdeal{from{transform:translateY(-18px) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+.gmsg{font:normal 19px Georgia,serif;color:#fff;text-align:center;min-height:24px}.gact{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.bets{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}.bets span{font-size:13px;color:#cfe6d6;margin-right:4px}
+.gnote{font-size:12px;color:#a79f8e;margin-top:10px;line-height:1.5}
+.scr{display:grid;grid-template-columns:repeat(3,72px);gap:8px}#panel .scr .sl{width:72px;height:72px;font:700 26px Georgia,serif;color:#e3c27a}#panel .scr .sl img{width:48px;height:48px}
+.chs{display:flex;gap:18px}#panel .chest{width:132px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}#panel .chest img{width:92px;height:92px}#panel .chest.pick{background-color:rgba(227,194,122,.3)}#panel .chest:disabled{opacity:1}
+#weps button small{display:block;font-size:11px;color:#b9c0cc;margin-top:2px}#weps button{text-align:left}

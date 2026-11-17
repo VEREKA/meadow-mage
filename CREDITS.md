@@ -12,6 +12,9 @@ Kod gry: Aleksander Kamiński (VEREKA) z pomocą Claude.
 | Spells & Skills – Free Sampler (`assets/icons`) | AkaliOnly — akalionly.itch.io | własna licencja: wolno używać w grach, nie wolno rozpowszechniać ikon osobno ani jako paczki |
 | Fantasy UI Borders (`assets/ui`, przebarwione) | Kenney — kenney.nl | CC0 |
 | Farm Animals Animated (`assets/models/pets`) | Quaternius — quaternius.com | CC0 |
+| Ultimate RPG Items Pack (`assets/icons/items`) | Quaternius | CC0 |
+| Fantasy Props MegaKit, wersja Standard (`assets/models/village`, tekstury pomniejszone) | Quaternius | CC0 |
+| Staffs pack 01 (`assets/models/weapons`) | Rostislav Gnatovsky (Cardinal Zebra) — cardinalzebra.itch.io | darmowe do dowolnego użytku wg pliku autora |
 | Three.js | three.js authors | MIT |
 
 Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek zasobów.

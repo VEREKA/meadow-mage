@@ -66,13 +66,13 @@ function init() {
     glowMat = new THREE.SpriteMaterial({map: new THREE.CanvasTexture(gc), color: 0xff7a2a, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending});
     const glow = new THREE.Sprite(glowMat); glow.position.set(0, 1.2, -1.2); glow.scale.setScalar(5.5); scene.add(glow);
     const L = new GLTFLoader(), load = u => new Promise(r => L.load(u, r, undefined, () => r(null)));
-    Promise.all([load('assets/models/npc/Mage.glb'), load('assets/models/npc/Rig_Medium_General.glb'), load('assets/models/props/staff.gltf'), load('assets/models/props/wand.gltf')]).then(([m, rig, st, wd]) => {
+    Promise.all([load('assets/models/npc/Mage.glb'), load('assets/models/npc/Rig_Medium_General.glb'), load('assets/models/props/staff.gltf'), load('assets/models/props/wand.gltf'), load('assets/models/props/spellbook_open.gltf')]).then(([m, rig, st, wd, bk]) => {
       if (!m) { $('lhero').style.display = 'none'; sbox.classList.add('nohero'); return; }
       const o = m.scene; o.scale.setScalar(.92); rot.add(o);
       o.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (!robeMat) { robeMat = q.material; baseImg = q.material.map && q.material.map.image; } } });
       if (st) {
         let hand = null; o.traverse(q => { if (!hand && /handslot.?r$/i.test(q.name)) hand = q; });
-        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; if (wd) { wd.scene.traverse(q => { if (q.isMesh) q.material = q.material.clone(); }); wd.scene.scale.setScalar(1.5); hand.add(wd.scene); H.wand = wd.scene; } }
+        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; if (wd) { wd.scene.traverse(q => { if (q.isMesh) q.material = q.material.clone(); }); wd.scene.scale.setScalar(1.5); hand.add(wd.scene); H.wand = wd.scene; } if (bk) { bk.scene.scale.setScalar(1.6); hand.add(bk.scene); H.book = bk.scene; } }
       }
       if (rig) {
         mixer = new THREE.AnimationMixer(o);
@@ -84,7 +84,7 @@ function init() {
       if (H.staff) {   // stand the staff upright in the idle pose, whatever way the hand bone points
         if (mixer) mixer.update(0); rot.updateMatrixWorld(true);
         const qh = H.hand.getWorldQuaternion(new THREE.Quaternion()), qr = rot.getWorldQuaternion(new THREE.Quaternion());
-        H.staff.quaternion.copy(qh.invert().multiply(qr)); if (H.wand) { H.wand.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), .5)); }
+        H.staff.quaternion.copy(qh.invert().multiply(qr)); if (H.book) { H.book.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-1, .4, 0))); H.book.position.set(0, .25, .1); } if (H.wand) { H.wand.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), .5)); }
       }
       H.ready = true; look(false);
     });
@@ -114,7 +114,7 @@ function init() {
     const ch = MM.char, oc = ORIGC[ch.origin] || ORIGC[0];
     paintRobe(MM.ROBEC[ch.robe] || MM.ROBEC[0]);
     if (staffMat) staffMat.color.set(MM.WOODC[ch.wood] || MM.WOODC[0]).lerp(new THREE.Color(0xffffff), .35);
-    if (H.staff) H.staff.visible = !ch.weapon; if (H.wand) H.wand.visible = !!ch.weapon;
+    if (H.staff) H.staff.visible = !ch.weapon; if (H.wand) H.wand.visible = ch.weapon === 1; if (H.book) H.book.visible = ch.weapon === 2;
     rim.color.set(oc); ring.material.color.set(oc); glowMat.color.set(oc);
     if (wave && act && idle) { act.enabled = true; act.reset().play(); act.crossFadeFrom(idle, .15, false); }
     heroTag();
@@ -254,7 +254,7 @@ function init() {
       [91.5, 15, '<b>Minimapa</b>: czerwone kropki to stwory, żółte to stanowiska w obozie, kolorowe to łupy.'],
       [50, 76.5, 'Pasek stanu: <b>serca</b>, numer fali, pokonane stwory i złoto.']]],
     ['Zaklęcia i mana', 'Walka', 'how2', [
-      [50, 44, '<b>Lewy przycisk</b> rzuca wybrane zaklęcie; przytrzymaj, by rzucać seriami. <b>Prawy przycisk</b> to szybki podmuch, gdy go odblokujesz.'],
+      [50, 44, 'Fale wzywasz <b>Totemem fal</b> przed północną bramą wioski. <b>Lewy przycisk</b> rzuca wybrane zaklęcie; przytrzymaj, by rzucać seriami. <b>Prawy przycisk</b> to szybki podmuch, gdy go odblokujesz.'],
       [36, 92.5, '<kbd>1</kbd>–<kbd>8</kbd>, kółko myszy albo <kbd>Q</kbd> wybierają zaklęcie. Kłódka oznacza czar do odblokowania w drzewku.'],
       [66, 87.2, 'Niebieski pasek to <b>mana</b>. Każde zaklęcie ma własny koszt, czas odnowienia i zasięg; mana odnawia się sama.'],
       [33, 84.6, 'Zielony pasek to <b>doświadczenie</b>. Każdy poziom daje punkt umiejętności.']]],
@@ -315,6 +315,7 @@ function init() {
   /* ---------- news ---------- */
   const NEWS = [
     ['Nowy launcher', '17 listopada 2026', ['Tło to teraz przelot kamery nad aktualną krainą, z paralaksą na mysz.', 'Podgląd maga w 3D: szata, kostur i pochodzenie zmieniają się na żywo.', 'Opcje w sześciu zakładkach, w tym przypisywanie klawiszy i eksport zapisu.', 'Samouczek ze zrzutami ekranu, profil ze statystykami i osiągnięciami, nagroda dnia.', 'W grze: liczby obrażeń, trzy style celownika, licznik klatek.']],
+    ['Wioska, boss i gry krupiera', '17 listopada 2026', ['Obóz to teraz wioska za palisadą: stwory do niej nie wchodzą, a fale wzywa Totem fal przed północną bramą (co trzy fale od nowa).', 'Co dziesiątą falę przychodzi boss z własnym paskiem życia i trzema fazami.', 'Trafienia krytyczne, słabszy rozprysk Fireballa i lepsze omijanie przeszkód przez stwory.', 'Trzy bronie: kostur, różdżka i księga. Założony trzon zmienia wygląd kosturu.', 'Krupier w wiosce: blackjack, wyżej czy niżej, zdrapka i trzy kufry. U handlarza sprzedaż wielu przedmiotów naraz.', 'Nowy pasek serc i zwierzak, który doskakuje do stworów.']],
     ['Modele 3D, mana i obrona wieży', '17 listopada 2026', ['Animowane modele stworów i postaci w obozie.', 'Mana, osobne koszty i zasięgi zaklęć, nowy Frostbolt.', 'Zakładka Rozwój: trening, kryształ many, zwierzaki, odrodzenie.', 'Tryb obrony wieży z wieżyczkami.']]];
   function news() {
     const box = $('secNews'); box.textContent = ''; box.append(el('h3', null, 'Nowości'));
