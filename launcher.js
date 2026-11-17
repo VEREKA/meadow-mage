@@ -123,6 +123,24 @@ function init() {
     tag.textContent = '';
     tag.append(el('b', null, ch.name || 'Bezimienny'), el('span', null, `${MM.ORIGINS[ch.origin][0]} · poziom ${p.lvl}${p.rb ? ' · odrodzenia ' + p.rb : ''}`), el('em', null, (pet ? 'Zwierzak: ' + pet[1] + ' · ' : '') + 'przeciągnij, aby obrócić'));
   }
+  // small renders for the in-game panel: the mage in given colours, or any model as a portrait
+  window.MMHero = {
+    snap(robe, wood, w, h) {
+      if (!rend || !H.ready) return null;
+      paintRobe(robe); if (staffMat) staffMat.color.set(wood).lerp(new THREE.Color(0xffffff), .35);
+      if (mixer) mixer.update(0);
+      rend.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); cam.position.set(0, 1.42, 7.4); cam.lookAt(0, 1.2, 0); rot.rotation.y = -.3;
+      rend.render(scene, cam); const u = cv.toDataURL(); look(false); return u;
+    },
+    thumb(obj, px) {
+      if (!rend) return null;
+      const sc = new THREE.Scene(), d = new THREE.DirectionalLight(0xfff0dc, 2.6); d.position.set(2, 3, 4); sc.add(new THREE.HemisphereLight(0xffffff, 0x444a55, 2.2), d, obj);
+      obj.rotation.y = -.7; obj.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(obj), c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2, cm = new THREE.PerspectiveCamera(30, 1, .01, 100);
+      cm.position.set(c.x, c.y + r * .3, c.z + r / Math.tan(15 * Math.PI / 180) * 1.02); cm.lookAt(c);
+      rend.setSize(px, px, false); rend.render(sc, cm); return cv.toDataURL();
+    }
+  };
   cv.addEventListener('pointerdown', e => { H.drag = e.clientX; cv.setPointerCapture(e.pointerId); });
   cv.addEventListener('pointermove', e => { if (H.drag == null) return; const dx = e.clientX - H.drag; H.drag = e.clientX; H.yaw += dx * .012; H.vel = dx * .012; });
   ['pointerup', 'pointercancel'].forEach(n => cv.addEventListener(n, () => { H.drag = null; }));

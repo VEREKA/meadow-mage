@@ -10,6 +10,8 @@ Kod gry: Aleksander Kamiński (VEREKA) z pomocą Claude.
 | Particle Pack, Smoke Particles (`assets/fx/*_0*.png`) | Kenney — kenney.nl | CC0 |
 | Pixel Magic Effects (`assets/fx/explosion.png`, `portal.png`) | lordfitoi / Foozle — foozle.io | CC0 |
 | Spells & Skills – Free Sampler (`assets/icons`) | AkaliOnly — akalionly.itch.io | własna licencja: wolno używać w grach, nie wolno rozpowszechniać ikon osobno ani jako paczki |
+| Fantasy UI Borders (`assets/ui`, przebarwione) | Kenney — kenney.nl | CC0 |
+| Farm Animals Animated (`assets/models/pets`) | Quaternius — quaternius.com | CC0 |
 | Three.js | three.js authors | MIT |
 
 Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek zasobów.
