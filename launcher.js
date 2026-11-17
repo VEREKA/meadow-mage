@@ -66,13 +66,13 @@ function init() {
     glowMat = new THREE.SpriteMaterial({map: new THREE.CanvasTexture(gc), color: 0xff7a2a, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending});
     const glow = new THREE.Sprite(glowMat); glow.position.set(0, 1.2, -1.2); glow.scale.setScalar(5.5); scene.add(glow);
     const L = new GLTFLoader(), load = u => new Promise(r => L.load(u, r, undefined, () => r(null)));
-    Promise.all([load('assets/models/npc/Mage.glb'), load('assets/models/npc/Rig_Medium_General.glb'), load('assets/models/props/staff.gltf')]).then(([m, rig, st]) => {
+    Promise.all([load('assets/models/npc/Mage.glb'), load('assets/models/npc/Rig_Medium_General.glb'), load('assets/models/props/staff.gltf'), load('assets/models/props/wand.gltf')]).then(([m, rig, st, wd]) => {
       if (!m) { $('lhero').style.display = 'none'; sbox.classList.add('nohero'); return; }
       const o = m.scene; o.scale.setScalar(.92); rot.add(o);
       o.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (!robeMat) { robeMat = q.material; baseImg = q.material.map && q.material.map.image; } } });
       if (st) {
         let hand = null; o.traverse(q => { if (!hand && /handslot.?r$/i.test(q.name)) hand = q; });
-        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; }
+        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; if (wd) { wd.scene.traverse(q => { if (q.isMesh) q.material = q.material.clone(); }); wd.scene.scale.setScalar(1.5); hand.add(wd.scene); H.wand = wd.scene; } }
       }
       if (rig) {
         mixer = new THREE.AnimationMixer(o);
@@ -84,7 +84,7 @@ function init() {
       if (H.staff) {   // stand the staff upright in the idle pose, whatever way the hand bone points
         if (mixer) mixer.update(0); rot.updateMatrixWorld(true);
         const qh = H.hand.getWorldQuaternion(new THREE.Quaternion()), qr = rot.getWorldQuaternion(new THREE.Quaternion());
-        H.staff.quaternion.copy(qh.invert().multiply(qr));
+        H.staff.quaternion.copy(qh.invert().multiply(qr)); if (H.wand) { H.wand.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), .5)); }
       }
       H.ready = true; look(false);
     });
@@ -114,6 +114,7 @@ function init() {
     const ch = MM.char, oc = ORIGC[ch.origin] || ORIGC[0];
     paintRobe(MM.ROBEC[ch.robe] || MM.ROBEC[0]);
     if (staffMat) staffMat.color.set(MM.WOODC[ch.wood] || MM.WOODC[0]).lerp(new THREE.Color(0xffffff), .35);
+    if (H.staff) H.staff.visible = !ch.weapon; if (H.wand) H.wand.visible = !!ch.weapon;
     rim.color.set(oc); ring.material.color.set(oc); glowMat.color.set(oc);
     if (wave && act && idle) { act.enabled = true; act.reset().play(); act.crossFadeFrom(idle, .15, false); }
     heroTag();
@@ -159,7 +160,7 @@ function init() {
   }
   requestAnimationFrame(heroFrame);
   $('cname').addEventListener('input', () => { MM.char.name = $('cname').value.trim().slice(0, 16); heroTag(); });
-  ['robes', 'woods', 'origins'].forEach(id => $(id).addEventListener('click', () => setTimeout(() => look(true), 0)));
+  ['robes', 'woods', 'origins', 'weps'].forEach(id => $(id).addEventListener('click', () => setTimeout(() => look(true), 0)));
 
   /* ---------- character tab: what your choices add up to ---------- */
   function charStats() {

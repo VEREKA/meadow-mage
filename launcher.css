@@ -98,3 +98,4 @@ body.rm #lbgimg,body.rm #lfx i,body.rm .sec.glass,body.rm #hero,body.rm .chip.go
  #maps{grid-template-columns:repeat(3,minmax(0,1fr))}#maps button{height:84px}#maps small{display:none}#ltop{position:static;margin-bottom:auto}
 }
 #secPlay{position:relative}#secPlay[hidden]{display:none}
+#weps button{margin:0 8px 0 0;font:inherit;color:#f3efe6;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 16px;cursor:pointer}#weps button.act{border-color:#ffd27a;background:rgba(255,210,122,.14)}
