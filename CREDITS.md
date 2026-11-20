@@ -28,3 +28,7 @@ Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek
 - **Holiday Kit** — Kenney (CC0): bałwany, sanki, choinka, prezenty, latarnia (`assets/models/holiday`).
 - **Ultimate Monsters** — Quaternius (CC0): bossowie Mushroom King i Yeti (`assets/models/monsters`).
 - Muzyka jest generowana na żywo w przeglądarce (WebAudio), bez plików dźwiękowych.
+
+## Dodane w aktualizacji 27
+- **Ikony drzewka umiejętności** (`assets/icons/skills`) — Lorc, Delapouite, Carl Olsen, Willdabeast, Zeromancer. Dostępne na https://game-icons.net, licencja CC BY 3.0.
+- **RPG Audio** i **Interface Sounds** (`assets/sfx`) — Kenney, kenney.nl (CC0).

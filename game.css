@@ -121,3 +121,5 @@ body.menu #bar,body.menu #name,body.menu #stat,body.menu #xp,body.menu #mana,bod
 body.big #panel,body.big .sec.glass{zoom:1.13}
 #relock{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);padding:16px 30px;text-align:center;color:#fff7e0;background:rgba(12,10,16,.72);border:1px solid rgba(255,230,170,.35);border-radius:10px;pointer-events:none;z-index:6;text-shadow:0 2px 6px #000}
 #relock b{display:block;font-size:26px;letter-spacing:.18em;text-transform:uppercase}#relock span{display:block;margin-top:6px;font-size:15px;opacity:.85}#relock[hidden]{display:none}
+#panel .hex span img{width:34px;height:34px;opacity:.92;filter:drop-shadow(0 1px 2px #000)}#panel .hex.no span img{opacity:.4}.tdet .big img{width:56px;height:56px;filter:drop-shadow(0 0 8px var(--c,#fff))}
+@media (max-width:760px){#panel .hex span img{width:26px;height:26px}}
