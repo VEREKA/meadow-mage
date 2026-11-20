@@ -15,6 +15,9 @@ Kod gry: Aleksander Kamiński (VEREKA) z pomocą Claude.
 | Ultimate RPG Items Pack (`assets/icons/items`) | Quaternius | CC0 |
 | Fantasy Props MegaKit, wersja Standard (`assets/models/village`, tekstury pomniejszone) | Quaternius | CC0 |
 | Staffs pack 01 (`assets/models/weapons`) | Rostislav Gnatovsky (Cardinal Zebra) — cardinalzebra.itch.io | darmowe do dowolnego użytku wg pliku autora |
+| Stylized Nature MegaKit, wersja Standard (`assets/models/nature`, tekstury pomniejszone) | Quaternius | CC0 |
+| KayKit Halloween Bits (`assets/models/halloween`) | Kay Lousberg | CC0 |
+| KayKit Skeletons 1.1 (`assets/models/npc/Skeleton_Mage.glb`) | Kay Lousberg | CC0 |
 | Three.js | three.js authors | MIT |
 
 Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek zasobów.

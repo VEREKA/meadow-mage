@@ -50,7 +50,7 @@ function init() {
   /* ---------- hero preview: animated 3D mage ---------- */
   const cv = $('heroCv'), tag = $('heroTag');
   const H = {ready: false, yaw: -.35, vel: 0, drag: null};
-  const ORIGC = [0xff7a2a, 0x6fd68a, 0xffd24a, 0xff6a8a];
+  const ORIGC = [0xff7a2a, 0x6fc8ff, 0xffe04a, 0x7dff9a];
   let rend, scene, cam, rot, mixer, idle, act, robeMat, baseImg, staffMat, rim, ring, glowMat, clock = performance.now();
   try {
     rend = new THREE.WebGLRenderer({canvas: cv, alpha: true, antialias: true});
@@ -65,30 +65,57 @@ function init() {
     const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
     glowMat = new THREE.SpriteMaterial({map: new THREE.CanvasTexture(gc), color: 0xff7a2a, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending});
     const glow = new THREE.Sprite(glowMat); glow.position.set(0, 1.2, -1.2); glow.scale.setScalar(5.5); scene.add(glow);
-    const L = new GLTFLoader(), load = u => new Promise(r => L.load(u, r, undefined, () => r(null)));
-    Promise.all([load('assets/models/npc/Mage.glb'), load('assets/models/npc/Rig_Medium_General.glb'), load('assets/models/props/staff.gltf'), load('assets/models/props/wand.gltf'), load('assets/models/props/spellbook_open.gltf')]).then(([m, rig, st, wd, bk]) => {
-      if (!m) { $('lhero').style.display = 'none'; sbox.classList.add('nohero'); return; }
-      const o = m.scene; o.scale.setScalar(.92); rot.add(o);
-      o.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (!robeMat) { robeMat = q.material; baseImg = q.material.map && q.material.map.image; } } });
-      if (st) {
-        let hand = null; o.traverse(q => { if (!hand && /handslot.?r$/i.test(q.name)) hand = q; });
-        if (hand) { st.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); staffMat = q.material; } }); hand.add(st.scene); H.hand = hand; H.staff = st.scene; if (wd) { wd.scene.traverse(q => { if (q.isMesh) q.material = q.material.clone(); }); wd.scene.scale.setScalar(1.5); hand.add(wd.scene); H.wand = wd.scene; } if (bk) { bk.scene.scale.setScalar(1.6); hand.add(bk.scene); H.book = bk.scene; } }
-      }
-      if (rig) {
-        mixer = new THREE.AnimationMixer(o);
-        const clip = n => THREE.AnimationClip.findByName(rig.animations, n);
-        if (clip('Idle_A')) { idle = mixer.clipAction(clip('Idle_A')); idle.play(); }
-        if (clip('Use_Item')) { act = mixer.clipAction(clip('Use_Item')); act.setLoop(THREE.LoopOnce); act.clampWhenFinished = true; }
-        mixer.addEventListener('finished', () => { if (idle && act) { idle.enabled = true; idle.reset().play(); idle.crossFadeFrom(act, .3, false); } });
-      }
-      if (H.staff) {   // stand the staff upright in the idle pose, whatever way the hand bone points
-        if (mixer) mixer.update(0); rot.updateMatrixWorld(true);
-        const qh = H.hand.getWorldQuaternion(new THREE.Quaternion()), qr = rot.getWorldQuaternion(new THREE.Quaternion());
-        H.staff.quaternion.copy(qh.invert().multiply(qr)); if (H.book) { H.book.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-1, .4, 0))); H.book.position.set(0, .25, .1); } if (H.wand) { H.wand.quaternion.copy(H.staff.quaternion).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), .5)); }
-      }
-      H.ready = true; look(false);
-    });
+    const L = new GLTFLoader();
+    H.load = u => new Promise(r => L.load(u, r, undefined, () => r(null)));
+    H.rig = H.load('assets/models/npc/Rig_Medium_General.glb');
+    H.weps = Promise.all(['staff', 'wand', 'spellbook_open'].map(f => H.load('assets/models/props/' + f + '.gltf'))).then(a => a.map((g, i) => {
+      if (!g) return null;
+      g.scene.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); if (i === 0) staffMat = q.material; } });
+      g.scene.scale.setScalar([1, 1.5, 1.6][i]); return g.scene;
+    }));
   } catch (e) { $('lhero').style.display = 'none'; sbox.classList.add('nohero'); rend = null; }
+
+  // one model per class; all KayKit characters share a rig, so the same clips drive each of them
+  const CLS = [['Mage', 'Throw'], ['Rogue_Hooded', 'Use_Item'], ['Ranger', 'Interact'], ['Skeleton_Mage', 'PickUp']], heroes = {};
+  const QW = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), .5), QB = new THREE.Quaternion().setFromEuler(new THREE.Euler(-1, .4, 0));
+  let hero = null, heroWant = -1;
+  function setHero(c) {
+    if (!rend) return; heroWant = c;
+    const show = h => {
+      if (heroWant !== c) return;
+      for (const k in heroes) if (heroes[k].o) heroes[k].o.visible = heroes[k] === h;
+      hero = h; mixer = h.mixer; idle = h.idle; act = h.act; robeMat = h.robeMat; baseImg = h.baseImg;
+      H.weps.then(ws => {
+        if (hero !== h) return;
+        if (h.hand) ws.forEach((w, i) => { if (!w) return; h.hand.add(w); w.quaternion.copy(h.q); if (i === 1) w.quaternion.multiply(QW); if (i === 2) { w.quaternion.multiply(QB); w.position.set(0, .25, .1); } });
+        H.staff = ws[0]; H.wand = ws[1]; H.book = ws[2]; H.ready = true; look(false);
+      });
+    };
+    if (heroes[c]) { if (heroes[c].o) show(heroes[c]); return; }
+    heroes[c] = {};
+    Promise.all([H.load('assets/models/npc/' + CLS[c][0] + '.glb'), H.rig]).then(([m, rig]) => {
+      if (!m) { delete heroes[c]; if (c) setHero(0); else { $('lhero').style.display = 'none'; sbox.classList.add('nohero'); } return; }
+      const h = heroes[c], o = m.scene; h.o = o; o.scale.setScalar(.92); o.visible = false; rot.add(o);
+      o.traverse(q => { if (q.isMesh) { q.frustumCulled = false; if (!h.robeMat) { h.robeMat = q.material; h.baseImg = q.material.map && q.material.map.image; } } if (!h.hand && /handslot.?r$/i.test(q.name)) h.hand = q; });
+      if (rig) {
+        h.mixer = new THREE.AnimationMixer(o);
+        const clip = n => THREE.AnimationClip.findByName(rig.animations, n), ac = clip(CLS[c][1]) || clip('Use_Item');
+        if (clip('Idle_A')) { h.idle = h.mixer.clipAction(clip('Idle_A')); h.idle.play(); }
+        if (ac) { h.act = h.mixer.clipAction(ac); h.act.setLoop(THREE.LoopOnce); h.act.clampWhenFinished = true; }
+        h.mixer.addEventListener('finished', () => { if (h.idle && h.act) { h.idle.enabled = true; h.idle.reset().play(); h.idle.crossFadeFrom(h.act, .3, false); } });
+      }
+      if (h.hand) {   // stand the weapon upright in the idle pose, whatever way the hand bone points
+        if (h.mixer) h.mixer.update(0); rot.updateMatrixWorld(true);
+        const qh = h.hand.getWorldQuaternion(new THREE.Quaternion()), qr = rot.getWorldQuaternion(new THREE.Quaternion());
+        h.q = qh.invert().multiply(qr);
+      }
+      show(h);
+    });
+  }
+  function dress(robe) {   // the mage texture is repainted; other classes get a light tint of the chosen colour
+    if (!hero || !robeMat) return;
+    if (hero === heroes[0]) paintRobe(robe); else if (hero !== heroes[3]) robeMat.color.set(robe).lerp(new THREE.Color(0xffffff), .5);
+  }
 
   // repaint the robe swatches of the palette texture in the chosen colour
   function paintRobe(c) {
@@ -110,9 +137,10 @@ function init() {
     robeMat.map = t; robeMat.needsUpdate = true;
   }
   function look(wave) {
-    if (!H.ready) return;
     const ch = MM.char, oc = ORIGC[ch.origin] || ORIGC[0];
-    paintRobe(MM.ROBEC[ch.robe] || MM.ROBEC[0]);
+    if (heroWant !== ch.origin) { H.ready = false; setHero(ch.origin); return; }
+    if (!H.ready) return;
+    dress(MM.ROBEC[ch.robe] || MM.ROBEC[0]);
     if (staffMat) staffMat.color.set(MM.WOODC[ch.wood] || MM.WOODC[0]).lerp(new THREE.Color(0xffffff), .35);
     if (H.staff) H.staff.visible = !ch.weapon; if (H.wand) H.wand.visible = ch.weapon === 1; if (H.book) H.book.visible = ch.weapon === 2;
     rim.color.set(oc); ring.material.color.set(oc); glowMat.color.set(oc);
@@ -128,7 +156,7 @@ function init() {
   window.MMHero = {
     snap(robe, wood, w, h) {
       if (!rend || !H.ready) return null;
-      paintRobe(robe); if (staffMat) staffMat.color.set(wood).lerp(new THREE.Color(0xffffff), .35);
+      dress(robe); if (staffMat) staffMat.color.set(wood).lerp(new THREE.Color(0xffffff), .35);
       if (mixer) mixer.update(0);
       rend.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); cam.position.set(0, 1.42, 7.4); cam.lookAt(0, 1.2, 0); rot.rotation.y = -.3;
       rend.render(scene, cam); const u = cv.toDataURL(); look(false); return u;
@@ -315,6 +343,7 @@ function init() {
   /* ---------- news ---------- */
   const NEWS = [
     ['Nowy launcher', '17 listopada 2026', ['Tło to teraz przelot kamery nad aktualną krainą, z paralaksą na mysz.', 'Podgląd maga w 3D: szata, kostur i pochodzenie zmieniają się na żywo.', 'Opcje w sześciu zakładkach, w tym przypisywanie klawiszy i eksport zapisu.', 'Samouczek ze zrzutami ekranu, profil ze statystykami i osiągnięciami, nagroda dnia.', 'W grze: liczby obrażeń, trzy style celownika, licznik klatek.']],
+    ['Klasy i żywsza łąka', '20 listopada 2026', ['Cztery klasy zamiast pochodzenia: Piromanta, Kriomanta, Burzowiec i Nekromanta — każda z własnym modelem, premią i kolorem magii.', 'Gęstsze tło: las na obrzeżach, nowe drzewa, paprocie, grzyby i kwiaty, a na horyzoncie zamek, wiatraki i latarnia.', 'Stwory padają z animacją zamiast znikać. Słychać kroki.', 'Radar odświeża się płynnie, a podpowiedź [E] wybiera stanowisko, na które patrzysz.']],
     ['Wioska, boss i gry krupiera', '17 listopada 2026', ['Obóz to teraz wioska za palisadą: stwory do niej nie wchodzą, a fale wzywa Totem fal przed północną bramą (co trzy fale od nowa).', 'Co dziesiątą falę przychodzi boss z własnym paskiem życia i trzema fazami.', 'Trafienia krytyczne, słabszy rozprysk Fireballa i lepsze omijanie przeszkód przez stwory.', 'Trzy bronie: kostur, różdżka i księga. Założony trzon zmienia wygląd kosturu.', 'Krupier w wiosce: blackjack, wyżej czy niżej, zdrapka i trzy kufry. U handlarza sprzedaż wielu przedmiotów naraz.', 'Nowy pasek serc i zwierzak, który doskakuje do stworów.']],
     ['Modele 3D, mana i obrona wieży', '17 listopada 2026', ['Animowane modele stworów i postaci w obozie.', 'Mana, osobne koszty i zasięgi zaklęć, nowy Frostbolt.', 'Zakładka Rozwój: trening, kryształ many, zwierzaki, odrodzenie.', 'Tryb obrony wieży z wieżyczkami.']]];
   function news() {
@@ -330,6 +359,6 @@ function init() {
   MM.hooks.tab = setTab;
   MM.hooks.render = () => { backdrop(); if (tab === 0) chips(); heroTag(); };
   MM.hooks.open = () => { chips(); look(false); };
-  backdrop(); setTab(0);
+  backdrop(); setTab(0); look(false);
   if (!localStorage.getItem('meadowmage_seenhow')) { try { localStorage.setItem('meadowmage_seenhow', '1'); } catch (e) {} $('stabs').children[4].click(); }
 }
