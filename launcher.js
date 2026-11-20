@@ -112,23 +112,25 @@ function init() {
       show(h);
     });
   }
-  function dress(robe) {   // the mage texture is repainted; other classes get a light tint of the chosen colour
+  function dress(robe) {   // each class texture has its clothing swatches repainted in the chosen colour
     if (!hero || !robeMat) return;
-    if (hero === heroes[0]) paintRobe(robe); else if (hero !== heroes[3]) robeMat.color.set(robe).lerp(new THREE.Color(0xffffff), .5);
+    for (let c = 0; c < 4; c++) if (hero === heroes[c]) paintRobe(robe, HUE[c]);
   }
+  // clothing hue band of each class texture and its mid lightness: violet mage, green rogue, blue ranger, crimson skeleton
+  const HUE = [[228, 276, 92], [138, 182, 70], [196, 246, 95], [322, 358, 80]];
 
   // repaint the robe swatches of the palette texture in the chosen colour
-  function paintRobe(c) {
+  function paintRobe(c, hb) {
     if (!robeMat || !baseImg) return;
     const w = baseImg.width, h = baseImg.height, c2 = document.createElement('canvas'); c2.width = w; c2.height = h;
     const g = c2.getContext('2d', {willReadFrequently: true}); g.drawImage(baseImg, 0, 0);
     const d = g.getImageData(0, 0, w, h), a = d.data, R = c >> 16 & 255, G = c >> 8 & 255, B = c & 255;
     for (let i = 0; i < a.length; i += 4) {
       const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
-      if (mx - mn < 14 || b !== mx) continue;                 // only saturated blue-violet texels: robe, hat, cape
-      const hue = r >= gg ? 240 + 60 * (r - gg) / (mx - mn) : 240 - 60 * (gg - r) / (mx - mn);
-      if (hue < 228 || hue > 276) continue;
-      const k = (r + gg + b) / 3 / 92;                          // lightness relative to the original mid violet
+      if (mx - mn < 14) continue;                             // only saturated texels inside the class's clothing hue band
+      let hue = mx === r ? 60 * ((gg - b) / (mx - mn)) : mx === gg ? 120 + 60 * (b - r) / (mx - mn) : 240 + 60 * (r - gg) / (mx - mn); if (hue < 0) hue += 360;
+      if (hue < hb[0] || hue > hb[1]) continue;
+      const k = (r + gg + b) / 3 / hb[2];                       // lightness relative to the original mid tone
       a[i] = Math.min(255, R * k); a[i + 1] = Math.min(255, G * k); a[i + 2] = Math.min(255, B * k);
     }
     g.putImageData(d, 0, 0);
