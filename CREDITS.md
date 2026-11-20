@@ -22,3 +22,9 @@ Kod gry: Aleksander Kamiński (VEREKA) z pomocą Claude.
 | Three.js | three.js authors | MIT |
 
 Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek zasobów.
+
+## Dodane w aktualizacji 24
+- **Ultimate Nature Pack** — Quaternius (CC0): ośnieżone drzewa, krzewy, skały, pnie (`assets/models/winter`).
+- **Holiday Kit** — Kenney (CC0): bałwany, sanki, choinka, prezenty, latarnia (`assets/models/holiday`).
+- **Ultimate Monsters** — Quaternius (CC0): bossowie Mushroom King i Yeti (`assets/models/monsters`).
+- Muzyka jest generowana na żywo w przeglądarce (WebAudio), bez plików dźwiękowych.
