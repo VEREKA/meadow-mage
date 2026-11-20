@@ -18,6 +18,7 @@ Kod gry: Aleksander Kamiński (VEREKA) z pomocą Claude.
 | Stylized Nature MegaKit, wersja Standard (`assets/models/nature`, tekstury pomniejszone) | Quaternius | CC0 |
 | KayKit Halloween Bits (`assets/models/halloween`) | Kay Lousberg | CC0 |
 | KayKit Skeletons 1.1 (`assets/models/npc/Skeleton_Mage.glb`) | Kay Lousberg | CC0 |
+| Medieval Village MegaKit, wersja Standard (wóz, skrzynie, płot w `assets/models/village`) | Quaternius | CC0 |
 | Three.js | three.js authors | MIT |
 
 Ikony AkaliOnly są częścią tej gry; nie kopiuj ich stąd do własnych paczek zasobów.
